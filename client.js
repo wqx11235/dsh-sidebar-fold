@@ -49,6 +49,17 @@ window.__ModuleLoader__.load({
 .sfb-dot { width: 5px; height: 5px; border-radius: 3px; background: currentColor; opacity: .45; }
 .sfb-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sfb-acc-empty { padding: 6px 10px 6px 30px; color: var(--dsw-alias-label-tertiary, #81858c); font-size: 13px; }
+.sfb-acc-foot { margin-top: 2px; border-top: .5px solid var(--dsw-alias-border-l2, rgba(0,0,0,.08)); border-radius: 0; color: var(--dsw-alias-label-secondary, #61666b); }
+.sfb-page { padding: 22px 26px 26px; max-width: 560px; color: var(--dsw-alias-label-primary, #0f1115); font-size: 14px; }
+.sfb-page-title { font-size: 15px; font-weight: 600; line-height: 22px; }
+.sfb-page-hint { margin: 6px 0 16px; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary, #81858c); }
+.sfb-page-list { display: flex; flex-direction: column; gap: 1px; }
+.sfb-line { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: var(--dsw-radius-sm, 8px); cursor: pointer; }
+.sfb-line:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(38,49,72,.06)); }
+.sfb-line input { width: 14px; height: 14px; margin: 0; accent-color: var(--dsw-alias-brand-primary, #0f1115); cursor: pointer; flex: none; }
+.sfb-line-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sfb-line-id { color: var(--dsw-alias-label-caption, #adb2b8); font-size: 11px; font-family: var(--ds-font-family-code, monospace); }
+.sfb-page-foot { margin-top: 16px; font-size: 12px; color: var(--dsw-alias-label-tertiary, #81858c); }
 .sfb-hidden { display: none !important; }
 .sfb-open { background: var(--dsw-alias-interactive-bg-hover, rgba(38,49,72,.06)); }
 @media (prefers-reduced-motion: reduce) { .sfb-acc { animation: none; } }
@@ -104,7 +115,59 @@ window.__ModuleLoader__.load({
       }
     }
 
-    const inject = ['slots']
+    /* ── 「留在外面」的面板名单：存在 localStorage（宿主自己的 client 插件也这么存 UI 偏好） ── */
+    const KEEP_KEY = 'dsh-sidebar-fold.keep'
+    let keepCache = null
+    const keepListeners = new Set()
+
+    function readKeep() {
+      try {
+        const v = JSON.parse(window.localStorage.getItem(KEEP_KEY) || '[]')
+        return Array.isArray(v) ? v.map(String) : []
+      } catch { return [] }
+    }
+    function getKeep() {
+      if (keepCache === null) keepCache = readKeep()
+      return keepCache
+    }
+    function setKeep(next) {
+      const list = Array.from(new Set(next.map(String)))
+      keepCache = list
+      try { window.localStorage.setItem(KEEP_KEY, JSON.stringify(list)) } catch { /* 忽略 */ }
+      for (const fn of keepListeners) { try { fn(list) } catch { /* 忽略 */ } }
+    }
+    function onKeepChange(fn) { keepListeners.add(fn); return () => keepListeners.delete(fn) }
+
+    /* 宿主只把面板 id 留在 slot 注册里，DOM 里只有 aria-label —— 所以按 label 反查 id */
+    function panelIdByLabel(slots) {
+      const map = new Map()
+      try {
+        for (const entry of (slots.entriesOfSlot('sidebar.panellist') || [])) {
+          const o = entry.options || {}
+          if (!o.id) continue
+          let label = o.label
+          if (typeof label === 'function') { try { label = label() } catch { label = '' } }
+          if (typeof label === 'string' && label) map.set(label, o.id)
+        }
+      } catch { /* 忽略 */ }
+      return map
+    }
+
+    function panelList(slots) {
+      const list = []
+      try {
+        for (const entry of (slots.entriesOfSlot('sidebar.panellist') || [])) {
+          const o = entry.options || {}
+          if (!o.id || o.id === ROW_ID) continue
+          let label = o.label
+          if (typeof label === 'function') { try { label = label() } catch { label = '' } }
+          list.push({ id: o.id, label: label || o.id })
+        }
+      } catch { /* 忽略 */ }
+      return list
+    }
+
+    const inject = ['slots', 'layout']
 
     /* 兜底：一个装饰插件绝不能把整个 UI 拖死（宿主 web boot 是全量门禁）。 */
     function guard(label, fn) {
@@ -122,9 +185,62 @@ window.__ModuleLoader__.load({
 
     function apply(ctx) {
       report('apply')
-      guard('apply', () => ctx.inject(['slots'], (pageCtx) => guard('init', () => {
+      guard('apply', () => ctx.inject(['slots', 'layout'], (pageCtx) => guard('init', () => {
         const slots = pageCtx.slots
+        const layout = pageCtx.layout
         const stops = []
+        let mainReady = false
+
+        /* 右键（或展开块底部的入口）跳到本插件自己的设置页 */
+        const openSettingsPage = () => {
+          if (!mainReady || !layout || typeof layout.selectPanel !== 'function') return
+          try { layout.selectPanel(ROW_ID) } catch { /* 忽略 */ }
+        }
+
+        /* 设置页：勾选哪些面板留在侧栏外面，其余收进「工具」 */
+        function FoldSettings() {
+          const [panels, setPanels] = useState([])
+          const [kept, setKept] = useState(getKeep())
+
+          useEffect(() => {
+            const refresh = () => setPanels(panelList(slots))
+            refresh()
+            const offKeep = onKeepChange((list) => setKept(list))
+            let stop = null
+            guard('settings-slot', () => {
+              stop = slots.inject('sidebar.panellist', () => {
+                refresh()
+                return () => { /* 无需清理 */ }
+              })
+            })
+            return () => {
+              try { if (stop) stop() } catch { /* 忽略 */ }
+              offKeep()
+            }
+          }, [])
+
+          const toggle = (id, on) => {
+            const next = new Set(getKeep())
+            if (on) next.add(id)
+            else next.delete(id)
+            setKeep(Array.from(next))
+          }
+
+          return h('div', { className: 'sfb-page' },
+            h('div', { className: 'sfb-page-title' }, ZH ? '侧栏折叠' : 'Sidebar fold'),
+            h('div', { className: 'sfb-page-hint' },
+              ZH ? '勾选要在侧栏里保留的面板，其余会被收进「工具」那一行。' : 'Check the panels that should stay in the sidebar. The rest are folded into Tools.'),
+            h('div', { className: 'sfb-page-list' }, panels.map((p) => h('label', { key: p.id, className: 'sfb-line' },
+              h('input', {
+                type: 'checkbox',
+                checked: kept.includes(p.id),
+                onChange: (e) => toggle(p.id, e.target.checked),
+              }),
+              h('span', { className: 'sfb-line-label' }, p.label),
+              h('span', { className: 'sfb-line-id' }, p.id)))),
+            h('div', { className: 'sfb-page-foot' },
+              ZH ? '「插件」那一行固定保留；「工具」是本插件自己。' : 'The Plugins row is always kept; Tools is this plugin.'))
+        }
 
         function FoldRow(props) {
           const [open, setOpen] = useState(false)
@@ -185,13 +301,19 @@ window.__ModuleLoader__.load({
 
               for (const el of hidden) el.classList.remove('sfb-hidden')
               hidden = []
+              const keptSeen = []
               const keepFirst = kids[0] === ownChild ? null : kids[0]
+              const idMap = panelIdByLabel(slots)
+              const keptIds = getKeep()
               const collected = []
               for (const el of kids) {
                 if (el === ownChild || el === keepFirst) continue
+                const info = readRow(el)
+                info.id = idMap.get(info.label) || info.label
+                // 用户在设置页里勾了「留在外面」：不动它
+                if (info.id && keptIds.includes(info.id)) { keptSeen.push(el); continue }
                 el.classList.add('sfb-hidden')
                 hidden.push(el)
-                const info = readRow(el)
                 const isHostMenu = !!(info.btn && info.btn.getAttribute && info.btn.getAttribute('aria-haspopup'))
                 if (info.label && !isHostMenu) collected.push(info)
               }
@@ -285,12 +407,24 @@ window.__ModuleLoader__.load({
               closeSoon()
             }
 
+            /* 右键：进插件自己的设置页（选择哪些面板留在外面） */
+            const onContextMenu = (e) => {
+              const b = rowBtn()
+              if (!b || !b.contains(e.target)) return
+              e.preventDefault()
+              e.stopPropagation()
+              report('contextmenu', { mainReady })
+              openSettingsPage()
+            }
+
             document.addEventListener('click', onClickCapture, true)
             document.addEventListener('keydown', onKeyDownCapture, true)
             document.addEventListener('pointerover', onPointerOver, true)
             document.addEventListener('pointerout', onPointerOut, true)
+            document.addEventListener('contextmenu', onContextMenu, true)
 
             sync()
+            const offKeep = onKeepChange(() => schedule())
             let observer = null
             try {
               observer = new MutationObserver((records) => {
@@ -316,6 +450,8 @@ window.__ModuleLoader__.load({
               document.removeEventListener('keydown', onKeyDownCapture, true)
               document.removeEventListener('pointerover', onPointerOver, true)
               document.removeEventListener('pointerout', onPointerOut, true)
+              document.removeEventListener('contextmenu', onContextMenu, true)
+              try { offKeep() } catch { /* 忽略 */ }
               const b = rowBtn()
               if (b && b.classList) b.classList.remove('sfb-open')
               for (const el of hidden) el.classList.remove('sfb-hidden')
@@ -383,6 +519,18 @@ window.__ModuleLoader__.load({
                 })
                 a.appendChild(item)
               })
+
+              // 底部入口：进设置页挑「哪些留在外面」
+              const foot = document.createElement('button')
+              foot.type = 'button'
+              foot.className = 'sfb-acc-item sfb-acc-foot'
+              foot.innerHTML = '<span class="sfb-ic"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.2 13.5a7.6 7.6 0 0 0 0-3l1.6-1.2-1.6-2.8-1.9.7a7.7 7.7 0 0 0-2.6-1.5L14.4 3h-3.2l-.3 2.2a7.7 7.7 0 0 0-2.6 1.5l-1.9-.7L4.8 8.8 6.4 10a7.6 7.6 0 0 0 0 3l-1.6 1.2 1.6 2.8 1.9-.7a7.7 7.7 0 0 0 2.6 1.5l.3 2.2h3.2l.3-2.2a7.7 7.7 0 0 0 2.6-1.5l1.9.7 1.6-2.8z"/></svg></span><span class="sfb-name">' + (ZH ? '选择留在外面的面板…' : 'Choose panels to keep…') + '</span>'
+              foot.addEventListener('click', (e) => {
+                e.stopPropagation()
+                setOpen(false)
+                openSettingsPage()
+              })
+              a.appendChild(foot)
             })
           }, [open, items, focusIdx])
 
@@ -400,6 +548,11 @@ window.__ModuleLoader__.load({
             onPointerDown: (e) => e.stopPropagation(),
           }, h(FoldIcon, props))
         }
+
+        guard('main', () => {
+          stops.push(slots.inject('main', () => slots.register({ name: 'main', key: ROW_ID }, FoldSettings)))
+          mainReady = true
+        })
 
         stops.push(slots.inject(SLOT, () =>
           slots.register(
