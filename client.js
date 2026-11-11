@@ -115,6 +115,8 @@ window.__ModuleLoader__.load({
         label,
         svgHTML: svg ? svg.outerHTML : '',
         current: !!(btn && btn.getAttribute('aria-current') === 'page'),
+        // 宿主自己的「更多」：点它要弹宿主菜单，位置得先摆好
+        menu: !!(btn && btn.getAttribute && btn.getAttribute('aria-haspopup')),
       }
     }
 
@@ -343,8 +345,7 @@ window.__ModuleLoader__.load({
                 if (info.id && keptIds.includes(info.id)) { keptSeen.push(el); continue }
                 el.classList.add('sfb-hidden')
                 hidden.push(el)
-                const isHostMenu = !!(info.btn && info.btn.getAttribute && info.btn.getAttribute('aria-haspopup'))
-                if (info.label && !isHostMenu) collected.push(info)
+                if (info.label) collected.push(info)
               }
               itemsRef.current = collected
               setItems(collected)
@@ -543,6 +544,27 @@ window.__ModuleLoader__.load({
                 item.addEventListener('click', (e) => {
                   e.stopPropagation()
                   setFocusIdx(-1)
+                  if (it.menu) {
+                    // 宿主自己的「更多」：它被我们收起来了，先把它临时摆在这一项的位置（不可见），
+                    // 再点它 —— 宿主的菜单是声明式的 portal，按触发按钮的 rect 定位，所以菜单会弹在这儿。
+                    const saved = it.el.getAttribute('style') || ''
+                    try {
+                      const r = item.getBoundingClientRect()
+                      it.el.classList.remove('sfb-hidden')
+                      it.el.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;z-index:0;' +
+                        'left:' + Math.round(r.left) + 'px;top:' + Math.round(r.top) + 'px;width:' + Math.round(r.width) + 'px'
+                      it.btn.click()
+                    } catch { /* 忽略 */ } finally {
+                      setTimeout(() => {
+                        try {
+                          it.el.style.cssText = saved
+                          it.el.classList.add('sfb-hidden')
+                        } catch { /* 忽略 */ }
+                      }, 0)
+                    }
+                    setOpen(false)
+                    return
+                  }
                   setOpen(false)
                   try { it.btn.click() } catch { /* 忽略 */ }
                 })

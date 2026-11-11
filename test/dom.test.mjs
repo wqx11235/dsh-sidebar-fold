@@ -123,7 +123,8 @@ await wait(200)
 let acc = nav.querySelector('.sfb-acc')
 check('悬停后行内展开', !!acc)
 check('展开块没有被自己隐藏', acc && !acc.classList.contains('sfb-hidden'))
-check('条目正确（4 个面板 + 设置入口）', acc && acc.querySelectorAll('.sfb-acc-item').length === 5)
+check('条目正确（4 个面板 + 宿主「更多」+ 设置入口）', acc && acc.querySelectorAll('.sfb-acc-item').length === 6,
+  acc ? [...acc.querySelectorAll('.sfb-name')].map((el) => el.textContent).join(',') : '')
 
 // ③ 移开收起
 await act(async () => { pointer('pointerout', toolBtn, document.body) })
@@ -152,6 +153,20 @@ if (!Settings) {
   check('勾选后侧栏不再隐藏经验库', !rowOf('经验库').classList.contains('sfb-hidden'))
   check('其他面板仍然收起', rowOf('自动化任务').classList.contains('sfb-hidden'))
 }
+
+// ⑥ 列表里的「更多」= 宿主自己那一行：点它会触发宿主按钮，并且事后重新收起
+await act(async () => { toolBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true })) })
+await wait(80)
+acc = nav.querySelector('.sfb-acc')
+const moreRow = nav.querySelector('button[aria-label="更多"]')
+let moreFired = 0
+moreRow.addEventListener('click', () => { moreFired++ })
+const moreItem = acc && [...acc.querySelectorAll('.sfb-acc-item')].find((el) => el.querySelector('.sfb-name').textContent === '更多')
+if (moreItem) await act(async () => { moreItem.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true })) })
+await wait(80)
+const moreWrap = moreRow.closest('nav > *') || moreRow
+check('点「更多」项会触发宿主按钮', moreFired === 1)
+check('触发后宿主那一行重新收起', moreWrap.classList.contains('sfb-hidden') || moreRow.classList.contains('sfb-hidden'))
 
 check('没有运行时错误', errors.length === 0, errors.join(' | '))
 
