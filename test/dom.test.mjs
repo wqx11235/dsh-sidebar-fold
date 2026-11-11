@@ -46,11 +46,12 @@ let Comp = null
 let Settings = null
 const errors = []
 
+let rowOptions = null
 const slots = {
   inject: (name, fn) => fn(),
   register: (opts, component) => {
     if (opts.name === 'main') Settings = component
-    else Comp = component
+    else { Comp = component; rowOptions = opts }
     return () => {}
   },
   entriesOfSlot: (name) => (name === 'sidebar.panellist'
@@ -107,6 +108,9 @@ const check = (name, ok, extra) => {
   else fail++
   console.log((ok ? '  ok   ' : '  FAIL ') + name + (extra ? '  ' + extra : ''))
 }
+
+// ⓪ 「更多」那一行的 order 必须足够大，永远排在所有面板行之后
+check('「更多」排在最后（order 很大）', rowOptions && rowOptions.order >= 1000, rowOptions && String(rowOptions.order))
 
 // ⓪ HMR 之后样式表要被更新，而不是"已存在就跳过"
 check('热替换后样式表被更新', styleRefreshed)

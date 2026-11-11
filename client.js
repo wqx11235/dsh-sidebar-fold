@@ -607,7 +607,9 @@ window.__ModuleLoader__.load({
 
         stops.push(slots.inject(SLOT, () =>
           slots.register(
-            { name: SLOT, id: ROW_ID, order: 9, label: () => (ZH ? '更多' : 'More') },
+            // order 取一个很大的值：不管以后装/删插件（它们的 order 都是几十以内），
+            // 这一行永远排在所有面板行之后，动态收纳时也始终在最下面。
+            { name: SLOT, id: ROW_ID, order: 1e6, label: () => (ZH ? '更多' : 'More') },
             FoldRow,
           )))
 
