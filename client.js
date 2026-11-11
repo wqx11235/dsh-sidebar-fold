@@ -134,6 +134,15 @@ window.__ModuleLoader__.load({
           const ownRef = useRef(null)
           const accRef = useRef(null)
           const navChildRef = useRef(null)
+          const openTimer = useRef(null)
+          const closeTimer = useRef(null)
+          const cancelClose = () => {
+            if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null }
+          }
+          const cancelTimers = () => {
+            cancelClose()
+            if (openTimer.current) { clearTimeout(openTimer.current); openTimer.current = null }
+          }
 
           const openRef = useRef(false)
           const focusRef = useRef(-1)
@@ -245,8 +254,41 @@ window.__ModuleLoader__.load({
               }
             }
 
+            /* 悬停：停 120ms 才展开（路过不跳），移开 150ms 收起；展开块内部视为“还在里面” */
+            const inArea = (node) => {
+              if (!node || !node.nodeType) return false
+              const b = rowBtn()
+              if (b && b.contains(node)) return true
+              const a = accEl()
+              return !!(a && a.contains(node))
+            }
+            const openSoon = () => {
+              cancelClose()
+              if (openRef.current || openTimer.current) return
+              openTimer.current = setTimeout(() => {
+                openTimer.current = null
+                setFocusIdx(-1)
+                setOpen(true)
+              }, 120)
+            }
+            const closeSoon = () => {
+              cancelTimers()
+              closeTimer.current = setTimeout(() => { closeTimer.current = null; setOpen(false) }, 150)
+            }
+            const onPointerOver = (e) => {
+              const b = rowBtn()
+              if (b && b.contains(e.target)) openSoon()
+            }
+            const onPointerOut = (e) => {
+              if (!inArea(e.target)) return
+              if (inArea(e.relatedTarget)) return
+              closeSoon()
+            }
+
             document.addEventListener('click', onClickCapture, true)
             document.addEventListener('keydown', onKeyDownCapture, true)
+            document.addEventListener('pointerover', onPointerOver, true)
+            document.addEventListener('pointerout', onPointerOut, true)
 
             sync()
             let observer = null
@@ -268,9 +310,12 @@ window.__ModuleLoader__.load({
             return () => {
               dead = true
               if (frame) cancelAnimationFrame(frame)
+              cancelClose()
               if (observer) observer.disconnect()
               document.removeEventListener('click', onClickCapture, true)
               document.removeEventListener('keydown', onKeyDownCapture, true)
+              document.removeEventListener('pointerover', onPointerOver, true)
+              document.removeEventListener('pointerout', onPointerOut, true)
               const b = rowBtn()
               if (b && b.classList) b.classList.remove('sfb-open')
               for (const el of hidden) el.classList.remove('sfb-hidden')
