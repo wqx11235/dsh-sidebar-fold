@@ -25,6 +25,8 @@ window.__ModuleLoader__.load({
 
     const css = `
 .sfb-glyph { display: inline-flex; align-items: center; justify-content: center; }
+.sfb-glyph > svg { transition: transform 140ms ease; }
+.sfb-open .sfb-glyph > svg { transform: rotate(180deg); }
 .sfb-acc {
   display: flex; flex-direction: column; gap: 2px; padding: 2px 0 6px 0;
   animation: sfb-in 90ms ease-out;
@@ -62,7 +64,7 @@ window.__ModuleLoader__.load({
 .sfb-page-foot { margin-top: 16px; font-size: 12px; color: var(--dsw-alias-label-tertiary, #81858c); }
 .sfb-hidden { display: none !important; }
 .sfb-open { background: var(--dsw-alias-interactive-bg-hover, rgba(38,49,72,.06)); }
-@media (prefers-reduced-motion: reduce) { .sfb-acc { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .sfb-acc { animation: none; } .sfb-glyph > svg { transition: none; } }
 `
 
     /* 诊断：渲染进程里 localStorage 读不到（dsh-app:// 协议），改用 <img> 打本地端口，由 diag-server.mjs 落盘 */
@@ -78,14 +80,15 @@ window.__ModuleLoader__.load({
     }
 
     function FoldIcon({ size = 20, active = false }) {
+      // 圆角方框 + 下箭头：一个形状一个箭头，16px 下不糊；展开时整枚旋转 180°（方框对称，只有箭头翻）
       return h('svg', {
         viewBox: '0 0 24 24', width: size, height: size, 'aria-hidden': 'true', focusable: 'false',
-        style: { display: 'block', opacity: active ? 1 : 0.72 },
+        style: { display: 'block', opacity: active ? 1 : 0.78 },
         fill: 'none', stroke: 'currentColor', strokeWidth: 1.7,
         strokeLinecap: 'round', strokeLinejoin: 'round',
       },
-      h('path', { d: 'M6 6.5 12 12 18 6.5' }),
-      h('path', { d: 'M5 17h14' }))
+      h('rect', { x: 3.6, y: 3.6, width: 16.8, height: 16.8, rx: 4.4 }),
+      h('path', { d: 'M8.4 10.2 12 13.8l3.6-3.6' }))
     }
 
     function findRowList(ownEl) {
@@ -253,7 +256,7 @@ window.__ModuleLoader__.load({
           return h('div', { className: 'sfb-page', style: S.page },
             h('div', { className: 'sfb-page-title', style: S.title }, ZH ? '侧栏折叠' : 'Sidebar fold'),
             h('div', { className: 'sfb-page-hint', style: S.hint },
-              ZH ? '勾选要在侧栏里保留的面板，其余会被收进「工具」那一行。' : 'Check the panels that should stay in the sidebar. The rest are folded into Tools.'),
+              ZH ? '勾选要在侧栏里保留的面板，其余会被收进「更多」那一行。' : 'Check the panels that should stay in the sidebar. The rest are folded into More.'),
             h('div', { className: 'sfb-page-list', style: S.list }, panels.map((p) => h('label', { key: p.id, className: 'sfb-line', style: S.line },
               h('input', {
                 type: 'checkbox',
@@ -265,7 +268,7 @@ window.__ModuleLoader__.load({
               h('span', { className: 'sfb-line-label', style: S.label }, p.label),
               h('span', { className: 'sfb-line-id', style: S.id }, p.id)))),
             h('div', { className: 'sfb-page-foot', style: S.foot },
-              ZH ? '「插件」那一行固定保留；「工具」是本插件自己。' : 'The Plugins row is always kept; Tools is this plugin.'))
+              ZH ? '「插件」那一行固定保留；「更多」是本插件自己。' : 'The Plugins row is always kept; More is this plugin.'))
         }
 
         function FoldRow(props) {
@@ -582,7 +585,7 @@ window.__ModuleLoader__.load({
 
         stops.push(slots.inject(SLOT, () =>
           slots.register(
-            { name: SLOT, id: ROW_ID, order: 9, label: () => (ZH ? '工具' : 'Tools') },
+            { name: SLOT, id: ROW_ID, order: 9, label: () => (ZH ? '更多' : 'More') },
             FoldRow,
           )))
 
