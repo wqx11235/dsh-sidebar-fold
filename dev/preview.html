@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>sidebar-fold preview (inline accordion)</title>
+<style>
+  html, body { margin: 0; }
+  body {
+    font-family: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    background: #eef0f3; display: flex; gap: 40px; padding: 28px;
+  }
+  .theme {
+    --bg-sidebar: #f9fafb;
+    --label-primary: #0f1115;
+    --label-tertiary: #81858c;
+    --menu-icon: #353638;
+    --hover: #2631480f;
+    --border-l1: #0000000a;
+  }
+  .theme.dark {
+    --bg-sidebar: #1b1b1c;
+    --label-primary: #f9fafb;
+    --label-tertiary: #adb2b8;
+    --menu-icon: #cfd3d6;
+    --hover: #ffffff14;
+    --border-l1: #ffffff0f;
+  }
+  .sidebar {
+    width: 248px; height: 560px; background: var(--bg-sidebar);
+    border-right: .5px solid var(--border-l1); box-sizing: border-box;
+    display: flex; flex-direction: column; padding: 10px 0 10px 8px;
+  }
+  .panelList { display: flex; flex-direction: column; gap: 2px; flex: none; margin-bottom: 8px; }
+  .panelRow {
+    display: flex; align-items: center; gap: 6px; min-height: 36px; width: 100%;
+    padding: 7px 9px; box-sizing: border-box;
+    border: none; border-inline: 3px solid transparent; border-radius: 12px;
+    color: var(--label-primary); font: inherit; font-size: 14px; line-height: 22px;
+    text-align: left; background: padding-box; cursor: pointer;
+  }
+  .panelRow:hover, .panelRow.sfb-open { background-color: var(--hover); }
+  .panelGlyph { flex: none; display: inline-flex; align-items: center; justify-content: center; }
+  .panelTitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ==== 行内向下展开：跟 client.js 里的 .sfb-acc 完全一致 ==== */
+  .sfb-acc { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 6px 0; }
+  .sfb-acc-item {
+    display: flex; align-items: center; gap: 8px; width: 100%; min-height: 32px;
+    padding: 5px 10px 5px 30px; box-sizing: border-box;
+    border: none; border-radius: 8px; background: transparent;
+    cursor: pointer; font-family: inherit; font-size: 13px; line-height: 20px;
+    color: var(--label-primary); text-align: left;
+  }
+  .sfb-acc-item:hover { background: var(--hover); }
+  .sfb-acc-item.sfb-current { background: var(--hover); }
+  .sfb-ic { display: inline-flex; flex: none; width: 14px; height: 14px; align-items: center; justify-content: center; color: var(--menu-icon); }
+  .sfb-ic > svg { width: 14px; height: 14px; display: block; }
+  .sfb-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* 工作区段（只为对比，不是插件的一部分） */
+  .section { display: flex; align-items: center; gap: 6px; padding: 8px 9px 6px; font-size: 12px; color: var(--label-tertiary); }
+  .wsRow { display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 5px 9px; font-size: 14px; color: var(--label-primary); }
+  .wsRow .meta { margin-left: auto; font-size: 11px; color: var(--label-tertiary); }
+</style>
+</head>
+<body>
+
+<div class="theme">
+  <div class="sidebar">
+    <div class="panelList">
+      <button class="panelRow"><span class="panelGlyph"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.8"/></svg></span><span class="panelTitle">插件</span></button>
+      <button class="panelRow sfb-open"><span class="panelGlyph"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6.5 12 12 18 6.5"/><path d="M5 17h14"/></svg></span><span class="panelTitle">工具</span></button>
+      <div class="sfb-acc">
+        <button class="sfb-acc-item"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><path d="M16.5 13v7M13 16.5h7"/></svg></span><span class="sfb-name">插件市场</span></button>
+        <button class="sfb-acc-item"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg></span><span class="sfb-name">自动化任务</span></button>
+        <button class="sfb-acc-item sfb-current"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2 2 0 0 1 6 3.5h5.5v15H6a2 2 0 0 0-2 2z"/><path d="M20 5.5a2 2 0 0 0-2-2h-5.5v15H18a2 2 0 0 1 2 2z"/></svg></span><span class="sfb-name">经验库</span></button>
+        <button class="sfb-acc-item"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 4.5V8M8.5 13h.01M15.5 13h.01"/></svg></span><span class="sfb-name">AstBot</span></button>
+        <button class="sfb-acc-item"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 8 5 12l4 4M15 8l4 4-4 4"/></svg></span><span class="sfb-name">GitHub</span></button>
+        <button class="sfb-acc-item"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5l2.3 4.9 5.2.7-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 10l5.2-.7z"/></svg></span><span class="sfb-name">技能中心</span></button>
+        <button class="sfb-acc-item"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 12 4l9 4.5-9 4.5z"/><path d="M7 10.8V16c0 1.5 2.2 2.8 5 2.8s5-1.3 5-2.8v-5.2"/></svg></span><span class="sfb-name">学习</span></button>
+      </div>
+    </div>
+    <div class="section">工作区</div>
+    <div class="wsRow">📁 QQ 会话<span class="meta">6小时</span></div>
+    <div class="wsRow">📁 微信会话<span class="meta">1天</span></div>
+    <div class="wsRow">📁 deepseek_harness<span class="meta">3分钟</span></div>
+    <div class="wsRow" style="padding-left:26px;font-size:13px;">处理侧栏折叠插件事项<span class="meta">3分钟</span></div>
+    <div class="wsRow" style="padding-left:26px;font-size:13px;">声音<span class="meta">2天</span></div>
+  </div>
+</div>
+
+<div class="theme dark">
+  <div class="sidebar">
+    <div class="panelList">
+      <button class="panelRow"><span class="panelGlyph"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.8"/></svg></span><span class="panelTitle">插件</span></button>
+      <button class="panelRow sfb-open"><span class="panelGlyph"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6.5 12 12 18 6.5"/><path d="M5 17h14"/></svg></span><span class="panelTitle">工具</span></button>
+      <div class="sfb-acc">
+        <button class="sfb-acc-item"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><path d="M16.5 13v7M13 16.5h7"/></svg></span><span class="sfb-name">插件市场</span></button>
+        <button class="sfb-acc-item"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg></span><span class="sfb-name">自动化任务</span></button>
+        <button class="sfb-acc-item sfb-current"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2 2 0 0 1 6 3.5h5.5v15H6a2 2 0 0 0-2 2z"/><path d="M20 5.5a2 2 0 0 0-2-2h-5.5v15H18a2 2 0 0 1 2 2z"/></svg></span><span class="sfb-name">经验库</span></button>
+        <button class="sfb-acc-item"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 4.5V8M8.5 13h.01M15.5 13h.01"/></svg></span><span class="sfb-name">AstBot</span></button>
+        <button class="sfb-acc-item"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 8 5 12l4 4M15 8l4 4-4 4"/></svg></span><span class="sfb-name">GitHub</span></button>
+        <button class="sfb-acc-item"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5l2.3 4.9 5.2.7-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 10l5.2-.7z"/></svg></span><span class="sfb-name">技能中心</span></button>
+        <button class="sfb-acc-item"><span class="sfb-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 12 4l9 4.5-9 4.5z"/><path d="M7 10.8V16c0 1.5 2.2 2.8 5 2.8s5-1.3 5-2.8v-5.2"/></svg></span><span class="sfb-name">学习</span></button>
+      </div>
+    </div>
+    <div class="section">工作区</div>
+    <div class="wsRow">📁 QQ 会话<span class="meta">6小时</span></div>
+    <div class="wsRow">📁 微信会话<span class="meta">1天</span></div>
+    <div class="wsRow">📁 deepseek_harness<span class="meta">3分钟</span></div>
+    <div class="wsRow" style="padding-left:26px;font-size:13px;">处理侧栏折叠插件事项<span class="meta">3分钟</span></div>
+    <div class="wsRow" style="padding-left:26px;font-size:13px;">声音<span class="meta">2天</span></div>
+  </div>
+</div>
+
+</body>
+</html>
