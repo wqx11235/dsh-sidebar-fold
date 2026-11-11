@@ -127,7 +127,7 @@ await wait(200)
 let acc = nav.querySelector('.sfb-acc')
 check('悬停后行内展开', !!acc)
 check('展开块没有被自己隐藏', acc && !acc.classList.contains('sfb-hidden'))
-check('条目正确（4 个面板 + 宿主「更多」+ 设置入口）', acc && acc.querySelectorAll('.sfb-acc-item').length === 6,
+check('条目正确（4 个面板 + 宿主「更多」，没有设置入口）', acc && acc.querySelectorAll('.sfb-acc-item').length === 5,
   acc ? [...acc.querySelectorAll('.sfb-name')].map((el) => el.textContent).join(',') : '')
 
 // ③ 移开收起

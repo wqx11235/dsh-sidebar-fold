@@ -51,7 +51,6 @@ window.__ModuleLoader__.load({
 .sfb-dot { width: 5px; height: 5px; border-radius: 3px; background: currentColor; opacity: .45; }
 .sfb-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sfb-acc-empty { padding: 6px 10px 6px 30px; color: var(--dsw-alias-label-tertiary, #81858c); font-size: 13px; }
-.sfb-acc-foot { margin-top: 2px; border-top: .5px solid var(--dsw-alias-border-l2, rgba(0,0,0,.08)); border-radius: 0; color: var(--dsw-alias-label-secondary, #61666b); }
 .sfb-page { padding: 22px 26px 26px; max-width: 560px; color: var(--dsw-alias-label-primary, #0f1115); font-size: 14px; }
 .sfb-page-title { font-size: 15px; font-weight: 600; line-height: 22px; }
 .sfb-page-hint { margin: 6px 0 16px; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary, #81858c); }
@@ -571,17 +570,6 @@ window.__ModuleLoader__.load({
                 a.appendChild(item)
               })
 
-              // 底部入口：进设置页挑「哪些留在外面」
-              const foot = document.createElement('button')
-              foot.type = 'button'
-              foot.className = 'sfb-acc-item sfb-acc-foot'
-              foot.innerHTML = '<span class="sfb-ic"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.2 13.5a7.6 7.6 0 0 0 0-3l1.6-1.2-1.6-2.8-1.9.7a7.7 7.7 0 0 0-2.6-1.5L14.4 3h-3.2l-.3 2.2a7.7 7.7 0 0 0-2.6 1.5l-1.9-.7L4.8 8.8 6.4 10a7.6 7.6 0 0 0 0 3l-1.6 1.2 1.6 2.8 1.9-.7a7.7 7.7 0 0 0 2.6 1.5l.3 2.2h3.2l.3-2.2a7.7 7.7 0 0 0 2.6-1.5l1.9.7 1.6-2.8z"/></svg></span><span class="sfb-name">' + (ZH ? '选择留在外面的面板…' : 'Choose panels to keep…') + '</span>'
-              foot.addEventListener('click', (e) => {
-                e.stopPropagation()
-                setOpen(false)
-                openSettingsPage()
-              })
-              a.appendChild(foot)
             })
           }, [open, items, focusIdx])
 
