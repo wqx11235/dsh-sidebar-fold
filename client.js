@@ -203,6 +203,17 @@ window.__ModuleLoader__.load({
           const [kept, setKept] = useState(getKeep())
 
           useEffect(() => {
+            try {
+              const tag = document.getElementById('dsh-sidebar-fold-style')
+              const probe = document.createElement('div')
+              probe.className = 'sfb-line'
+              probe.style.position = 'absolute'
+              probe.style.visibility = 'hidden'
+              document.body.appendChild(probe)
+              const computed = window.getComputedStyle(probe).display
+              probe.remove()
+              report('settings', { styleTag: !!tag, cssLen: tag ? tag.textContent.length : 0, lineDisplay: computed })
+            } catch (err) { report('settings-err', { msg: String(err) }) }
             const refresh = () => setPanels(panelList(slots))
             refresh()
             const offKeep = onKeepChange((list) => setKept(list))
@@ -226,19 +237,34 @@ window.__ModuleLoader__.load({
             setKeep(Array.from(next))
           }
 
-          return h('div', { className: 'sfb-page' },
-            h('div', { className: 'sfb-page-title' }, ZH ? '侧栏折叠' : 'Sidebar fold'),
-            h('div', { className: 'sfb-page-hint' },
+          // 同时写内联样式：面板页在宿主的主区域里，万一插件样式表没生效也不该变成一坨纯文本
+          const S = {
+            page: { padding: '22px 26px 26px', maxWidth: 560, color: 'var(--dsw-alias-label-primary, #0f1115)', fontSize: 14, lineHeight: '22px' },
+            title: { fontSize: 15, fontWeight: 600, lineHeight: '22px' },
+            hint: { margin: '6px 0 16px', fontSize: 12, lineHeight: '18px', color: 'var(--dsw-alias-label-tertiary, #81858c)' },
+            list: { display: 'flex', flexDirection: 'column', gap: 1 },
+            line: { display: 'flex', alignItems: 'center', gap: 10, padding: '7px 8px', borderRadius: 8, cursor: 'pointer' },
+            box: { width: 14, height: 14, margin: 0, flex: 'none', accentColor: 'var(--dsw-alias-brand-primary, #0f1115)', cursor: 'pointer' },
+            label: { flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+            id: { color: 'var(--dsw-alias-label-caption, #adb2b8)', fontSize: 11, fontFamily: 'var(--ds-font-family-code, monospace)' },
+            foot: { marginTop: 16, fontSize: 12, color: 'var(--dsw-alias-label-tertiary, #81858c)' },
+          }
+
+          return h('div', { className: 'sfb-page', style: S.page },
+            h('div', { className: 'sfb-page-title', style: S.title }, ZH ? '侧栏折叠' : 'Sidebar fold'),
+            h('div', { className: 'sfb-page-hint', style: S.hint },
               ZH ? '勾选要在侧栏里保留的面板，其余会被收进「工具」那一行。' : 'Check the panels that should stay in the sidebar. The rest are folded into Tools.'),
-            h('div', { className: 'sfb-page-list' }, panels.map((p) => h('label', { key: p.id, className: 'sfb-line' },
+            h('div', { className: 'sfb-page-list', style: S.list }, panels.map((p) => h('label', { key: p.id, className: 'sfb-line', style: S.line },
               h('input', {
                 type: 'checkbox',
+                className: 'sfb-line-box',
+                style: S.box,
                 checked: kept.includes(p.id),
                 onChange: (e) => toggle(p.id, e.target.checked),
               }),
-              h('span', { className: 'sfb-line-label' }, p.label),
-              h('span', { className: 'sfb-line-id' }, p.id)))),
-            h('div', { className: 'sfb-page-foot' },
+              h('span', { className: 'sfb-line-label', style: S.label }, p.label),
+              h('span', { className: 'sfb-line-id', style: S.id }, p.id)))),
+            h('div', { className: 'sfb-page-foot', style: S.foot },
               ZH ? '「插件」那一行固定保留；「工具」是本插件自己。' : 'The Plugins row is always kept; Tools is this plugin.'))
         }
 
@@ -560,12 +586,19 @@ window.__ModuleLoader__.load({
             FoldRow,
           )))
 
+        /* 样式表：**存在也要比对内容**。
+           宿主开了 HMR，插件热替换时页面并不会重载，旧的 <style> 会留在 head 里；
+           如果只在"不存在"时注入，新加的规则（例如设置页那套）就永远不会生效 ——
+           0.6.0 设置页渲染成一坨纯文本就是这个原因。 */
         const styleId = 'dsh-sidebar-fold-style'
-        if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
-          const el = document.createElement('style')
-          el.id = styleId
-          el.textContent = css
-          document.head.appendChild(el)
+        if (typeof document !== 'undefined' && document.head) {
+          let el = document.getElementById(styleId)
+          if (!el) {
+            el = document.createElement('style')
+            el.id = styleId
+            document.head.appendChild(el)
+          }
+          if (el.textContent !== css) el.textContent = css
         }
 
         return () => { for (const stop of stops) { try { stop() } catch { /* 忽略 */ } } }

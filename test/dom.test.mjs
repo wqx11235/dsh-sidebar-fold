@@ -79,8 +79,17 @@ vm.runInContext(code, vm.createContext({
   console: { error: (...a) => errors.push(String(a[0])), log: console.log },
 }))
 
+// 模拟 HMR：页面里已经留着上一版插件的 <style>（内容缺新规则）
+const stale = dom.window.document.createElement('style')
+stale.id = 'dsh-sidebar-fold-style'
+stale.textContent = '.sfb-glyph{display:inline-flex}'
+dom.window.document.head.appendChild(stale)
+
 mod.apply({ inject: (svc, cb) => cb({ slots, layout }) })
 if (!Comp) throw new Error('侧栏行组件没注册上')
+
+// 样式表必须被"更新"，而不是"已存在就跳过"（否则 HMR 之后新规则永远不生效）
+const styleRefreshed = dom.window.document.getElementById('dsh-sidebar-fold-style').textContent.includes('.sfb-page')
 
 const root = createRoot(document.getElementById('slot'))
 await act(async () => { root.render(React.createElement(Comp, { size: 16, active: false })) })
@@ -98,6 +107,9 @@ const check = (name, ok, extra) => {
   else fail++
   console.log((ok ? '  ok   ' : '  FAIL ') + name + (extra ? '  ' + extra : ''))
 }
+
+// ⓪ HMR 之后样式表要被更新，而不是"已存在就跳过"
+check('热替换后样式表被更新', styleRefreshed)
 
 // ① 收起其余面板行（保留第一行插件、排除宿主的「更多」）
 const hiddenLabels = [...nav.children]
