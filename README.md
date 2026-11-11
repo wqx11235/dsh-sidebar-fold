@@ -1,6 +1,6 @@
 # dsh-sidebar-fold
 
-DeepSeek Harness（DSH）桌面端的侧栏收纳插件：把插件注册的一堆面板行收成一行「更多」，点一下在行内向下展开。
+DeepSeek Harness（DSH）桌面端的侧栏收纳插件：把插件注册的面板行收成一行「更多」，悬停或点击在行内向下展开。
 
 ![预览](docs/preview.png)
 
