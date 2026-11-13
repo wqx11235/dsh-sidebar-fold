@@ -1,4 +1,4 @@
-# dsh-sidebar-fold
+# dsh-sidebar-fold-37
 
 DeepSeek Harness（DSH）桌面端的侧栏收纳插件：把插件注册的面板行收成一行「更多」，悬停或点击在行内向下展开。
 
@@ -32,7 +32,7 @@ npm pack
 然后把产物交给 DSH 的插件管理器安装，target 传 `file:<tgz 绝对路径>`：
 
 ```
-install_bundle  file:D:/path/to/dsh-sidebar-fold-0.5.8.tgz
+install_bundle  file:D:/path/to/dsh-sidebar-fold-37-0.7.0.tgz
 ```
 
 插件包自带 `cordis.patch.yml`（`insert` 的 id 是 `sidebar-fold`），装完重启应用生效。
