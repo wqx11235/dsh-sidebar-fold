@@ -12,7 +12,10 @@
 //  · 展开块必须是**行内向下**的普通 DOM（插入 nav），像 Workspace 展开那样把下面的内容顶下去，不要浮层。
 //  · 交互按用户要求只保留点击展开，不做悬停展开。
 window.__ModuleLoader__.load({
-  id: 'dsh-sidebar-fold',
+  // 必须与包名严格一致：模块系统按 manifest 的 entry id（= 包名）索引 factory。
+  // 写成 'dsh-sidebar-fold' 而包名是 'dsh-sidebar-fold-37' 时，首次加载注册了 A，
+  // 创建 entry 时按 B 找不到 factory 就再执行一遍 → "duplicate factory registration"。
+  id: 'dsh-sidebar-fold-37',
   factory(require) {
     const React = require('react')
     const h = React.createElement

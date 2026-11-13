@@ -1,6 +1,6 @@
 {
   "name": "dsh-sidebar-fold-37",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "DSH 侧栏收纳：把插件注册的面板行收成一行「更多」，悬停或点击在行内向下展开；右键进设置页，可勾选哪些面板留在外面。 / DSH sidebar fold: collapse plugin panel rows into one More row that expands inline on hover or click; right-click opens a settings page to choose which panels stay outside.",
   "license": "MIT",
   "type": "module",
