@@ -130,6 +130,13 @@ check('展开块没有被自己隐藏', acc && !acc.classList.contains('sfb-hidd
 check('条目正确（4 个面板 + 宿主「更多」，没有设置入口）', acc && acc.querySelectorAll('.sfb-acc-item').length === 5,
   acc ? [...acc.querySelectorAll('.sfb-name')].map((el) => el.textContent).join(',') : '')
 
+// ②b 指针从行滑到展开块（中间隔着 nav 的 2px 空隙）时，不能把展开块收掉
+await act(async () => { pointer('pointerout', toolBtn, nav) })          // 经过空隙
+const firstItem = acc && acc.querySelector('.sfb-acc-item')
+if (firstItem) await act(async () => { pointer('pointerover', firstItem) })
+await wait(350)
+check('滑到展开项时不会自己收起', !!nav.querySelector('.sfb-acc'))
+
 // ③ 移开收起
 await act(async () => { pointer('pointerout', toolBtn, document.body) })
 await wait(250)

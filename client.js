@@ -422,17 +422,32 @@ window.__ModuleLoader__.load({
                 setOpen(true)
               }, 120)
             }
+            /* 指针是否还在「那一行 + 展开块」这块区域里。
+               行和展开块之间隔着 nav 的 2px gap，指针穿过去会先触发一次 pointerout；
+               只靠 relatedTarget 判断不够稳（子元素重建时 relatedTarget 会是 null），
+               所以再维护一个实时标志，关之前复查一次。 */
+            let pointerInArea = false
             const closeSoon = () => {
               cancelTimers()
-              closeTimer.current = setTimeout(() => { closeTimer.current = null; setOpen(false) }, 150)
+              closeTimer.current = setTimeout(() => {
+                closeTimer.current = null
+                if (pointerInArea) return
+                setOpen(false)
+              }, 220)
             }
             const onPointerOver = (e) => {
+              const inside = inArea(e.target)
+              pointerInArea = inside
+              if (!inside) return
+              cancelClose()                       // 已经进到行/展开块里：取消待执行的收起
               const b = rowBtn()
-              if (b && b.contains(e.target)) openSoon()
+              if (b && b.contains(e.target) && !openRef.current) openSoon()
             }
             const onPointerOut = (e) => {
               if (!inArea(e.target)) return
-              if (inArea(e.relatedTarget)) return
+              const to = e.relatedTarget
+              pointerInArea = inArea(to)
+              if (pointerInArea) return
               closeSoon()
             }
 
